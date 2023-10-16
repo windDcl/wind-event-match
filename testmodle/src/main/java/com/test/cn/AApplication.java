@@ -7,7 +7,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-//@ComponentScan({"com.test.cn", "com.testb.cn"})
 @Import(ModuleConfig.class)
 public class AApplication {
     public static void main(String[] args) {
