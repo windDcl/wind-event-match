@@ -1,0 +1,283 @@
+# Click the Variables button, above, to create your own variables.
+PUT firstindex
+GET firstindex
+# 查询所有索引
+GET _cat/indices
+# 删除索引
+DELETE myindex
+
+
+# 添加文档，没有生成唯一标识，只能post
+POST firstindex/_doc
+{
+  "id": 1001,
+  "name":"zs",
+  "age": 13,
+  "city": "Beijing"
+}
+
+# 指定唯一标识，post或者put都可
+POST firstindex/_doc/1001
+{
+  "id": 1001,
+  "name":"zs",
+  "age": 13,
+  "city": "Beijing"
+}
+
+PUT firstindex/_doc/1001
+{
+  "id": 1001,
+  "name":"zs",
+  "age": 13,
+  "city": "Beijing"
+}
+# 查询文档，根据_id查询
+GET firstindex/_doc/1001
+
+# 修改文档和新增一样
+POST firstindex/_doc/1001
+{
+  "id": 1001,
+  "name":"zs",
+  "age": 13,
+  "city": "shanghai"
+}
+# 修改字段
+POST firstindex/_update/1001
+{
+  "doc": {
+    "city":"baoding"
+  }
+}
+# 删除文档
+DELETE firstindex/_doc/1001
+
+#####################搜索文档################
+# 准备数据
+POST firstindex/_doc/1002
+{
+  "id": 1001,
+  "name":"zs",
+  "age": 13,
+  "city": "shanghai"
+}
+POST firstindex/_doc/1003
+{
+  "id": 1002,
+  "name":"ls",
+  "age": 13,
+  "city": "shanghai"
+}
+POST firstindex/_doc/1004
+{
+  "id": 1001,
+  "name":"ws",
+  "age": 34,
+  "city": "shanghai"
+}
+POST firstindex/_doc/1005
+{
+  "id": 1005,
+  "name":"zs",
+  "age": 13,
+  "city": "guangzhou"
+}
+
+
+# 查询所有文档
+GET firstindex/_search
+# 匹配查询，满足条件的显示
+GET firstindex/_search
+{
+  "query": {
+    "match": {
+      "name": "zs"
+    }
+  }
+}
+# 匹配查询，但只返回想要的字段
+GET firstindex/_search
+{
+  "_source": ["name","age"], 
+  "query": {
+    "terms": {
+      "name": ["zs"]
+    }
+  }
+}
+
+# in操作
+GET firstindex/_search
+{
+  "query": {
+    "terms": {
+      "name": [
+        "zs",
+        "ls"
+      ]
+    }
+  }
+}
+
+# 排序
+GET firstindex/_search
+{
+  "query": {
+    "match_all": {
+
+    }
+  },
+  "sort":{
+    "age":{"order":"desc"}
+  },
+  "from":0,
+  "size":2
+}
+
+# 组合查询年龄必须大于13，在shanghai。  或者  在北京的
+GET firstindex/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "age": {
+              "gt": 13
+            }
+          }
+        },
+        {
+          "match": {
+            "city": "shanghai"
+          }
+        }
+      ],
+      "should": [
+        {
+          "match_all": {
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+
+#########################聚合搜索#####################
+# 平均值
+GET firstindex/_search
+{
+  "aggs": {
+    "avg_age": {
+      "avg": {
+        "field": "age"
+      }
+    }
+  },
+// 不要原始数据
+  "size": 0
+}
+# 求和
+POST firstindex/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "match":{"city":"Beijing"}
+      }
+    }
+  },
+  "aggs": {
+    "beijing_sum_age": {
+      "sum": {
+        "field": "age"
+      }
+    }
+  }
+}
+
+# 最大值
+POST firstindex/_search
+{
+  "aggs": {
+    "max_age": {
+      "max": {
+        "field": "age"
+      }
+    }
+  }
+}
+# topN
+
+
+# 映射关系：用来定义哪些字段可以分词，哪些课被索引
+PUT user
+PUT user/_mapping
+{
+  "properties":{
+      "name":{
+        "type":"text",
+        "index":true
+      },
+      "sex":{
+        "type":"keyword",
+        "index":true
+      },
+      "tel":{
+        "type":"keyword",
+        "index":false
+      }
+    }
+}
+
+PUT user/_doc/1001
+{
+  "name":"liming",
+  "sex":"男",
+  "tel":1111
+}
+
+GET user/_search
+{
+  "query": {
+    "match_phrase": {
+      "tel": 1111
+    }
+  },
+  "highlight": {
+    "fields": {
+      "name":{}
+    }
+  }
+}
+
+#############模版#############3
+# 模板名称小写
+PUT _template/mytemplate
+{
+ "index_patterns" : ["my*"],
+ "settings" : {
+   "index" : {"number_of_shards" : "1"}
+ },
+ "mappings" : {
+   "properties" : {
+     "now": {
+       "type" : "date",
+       "format" : "yyyy/MM/dd"
+     }
+   }
+ } 
+}
+
+
+
+
+
+
+
+
+
+
